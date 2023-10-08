@@ -1,0 +1,123 @@
+package br.com.alura.calendario
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.util.Log
+import android.widget.Button
+import android.widget.TimePicker
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import java.util.Calendar
+
+class ConfigurarAlarmeActivity: Activity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.configurar_alarme_activity)
+        println(intent.getStringExtra("dataSelecionada"))
+
+        val botaoPronto = findViewById<Button>(R.id.configurarAlarmeBotaoPronto)
+        botaoPronto.setOnClickListener{
+            configuraAlarme()
+            configuraNotificacao()
+            finish()
+        }
+
+
+        voltarParaTelaAnterior()
+    }
+
+    private fun configuraNotificacao() {
+        val notificationManager = NotificationManagerCompat.from(this)
+        val channelId = "alarm_channel"
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            val channel = NotificationChannel(
+                channelId,
+                "Alarm Channel", NotificationManager.IMPORTANCE_HIGH
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val dataSelecionada = intent.getStringExtra("dataSelecionada")
+        val stopIntent = Intent(this, AlarmService::class.java)
+        stopIntent.action = "ACTION_STOP_ALARM"
+        stopIntent.putExtra("dataSelecionada", dataSelecionada)
+        val pendingStopIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE)
+
+        val notificacao = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_alarm)
+            .setContentTitle("Alarme")
+            .setContentText("Teste de Alarme")
+            .addAction(R.drawable.ic_stop, "Parar", pendingStopIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+//            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setAutoCancel(true)
+            .build()
+
+//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this,
+//                arrayOf(Manifest.permission.POST_NOTIFICATIONS.toString()),101);
+//        }
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.POST_NOTIFICATIONS.toString()),101)
+
+        }
+        notificationManager.notify(1, notificacao)
+    }
+
+    private fun configuraAlarme() {
+        val timePicker = findViewById<TimePicker>(R.id.timePicker)
+
+        val dataSelecionada = intent.getStringExtra("dataSelecionada")
+        val partes = dataSelecionada?.split("-")
+        val ano = partes?.get(0)?.toInt()
+        val mes = partes?.get(1)?.toInt()
+        val dia = partes?.get(2)?.toInt()
+
+        val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, AlarmService::class.java)
+        intent.action = "ACTION_START_ALARM"
+        val pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
+        val hora = timePicker.hour
+        val minuto = timePicker.minute
+
+        Log.d("Data", "ano:" +ano+ ", mes:"+ mes + ", dia:" + dia)
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.YEAR, ano!!)
+        calendar.set(Calendar.MONTH, mes!!)
+        calendar.set(Calendar.DAY_OF_MONTH, dia!!)
+        calendar.set(Calendar.HOUR_OF_DAY, hora)
+        calendar.set(Calendar.MINUTE, minuto)
+
+//        if (calendar.timeInMillis <= System.currentTimeMillis()){
+//            calendar.add(Calendar.DAY_OF_MONTH, 1)
+//        }
+
+        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+    }
+
+    private fun voltarParaTelaAnterior() {
+        val botaoVoltar = findViewById<Button>(R.id.configurarAlarmeBotaoVoltar)
+        botaoVoltar.setOnClickListener {
+            finish()
+        }
+    }
+
+}
