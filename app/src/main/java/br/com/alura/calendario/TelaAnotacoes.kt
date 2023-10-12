@@ -4,18 +4,20 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
-import android.widget.Button
 import android.widget.EditText
+import br.com.alura.calendario.databinding.TelaAnotacoesBinding
 
 class TelaAnotacoes : Activity(){
     private lateinit var anotacao: EditText
+    private lateinit var binding: TelaAnotacoesBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.tela_anotacoes)
+        binding = TelaAnotacoesBinding.inflate(layoutInflater)
+        val telaAnotacoes = binding.root
+        setContentView(telaAnotacoes)
 
-        anotacao = findViewById(R.id.editText)
+        anotacao = binding.editText
 
         val dataSelecionada = intent.getStringExtra("dataSelecionada")
         val sharedPreferences = getSharedPreferences("Anotacoes", Context.MODE_PRIVATE)
@@ -29,7 +31,7 @@ class TelaAnotacoes : Activity(){
     }
 
     private fun vaiParaTelaAlarme(dataSelecionada: String?) {
-        val botaoAlerta = findViewById<Button>(R.id.botaoAlerta)
+        val botaoAlerta = binding.botaoAlerta
         botaoAlerta.setOnClickListener {
             val intent = Intent(this, ConfigurarAlarmeActivity::class.java)
             intent.putExtra("dataSelecionada", dataSelecionada)
@@ -38,7 +40,7 @@ class TelaAnotacoes : Activity(){
     }
 
     private fun voltarParaTelaAnterior() {
-        val botaoVoltar = findViewById<Button>(R.id.telaAnotaoesBotaoVoltar)
+        val botaoVoltar = binding.telaAnotaoesBotaoVoltar
         botaoVoltar.setOnClickListener {
             finish()
         }

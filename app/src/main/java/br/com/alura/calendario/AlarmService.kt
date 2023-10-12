@@ -5,6 +5,7 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.IBinder
+import android.util.Log
 
 class AlarmService : Service() {
     private var mediaPlayer : MediaPlayer? = null
@@ -19,13 +20,7 @@ class AlarmService : Service() {
             startAlarm()
         } else if (intent?.action == "ACTION_STOP_ALARM"){
             stopAlarm()
-            val dataSelecionada = intent?.getStringExtra("dataSelecionada")
-
-            try {
-                abrirLembrete()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            abrirLembrete()
         }
         return START_NOT_STICKY
     }
@@ -34,6 +29,14 @@ class AlarmService : Service() {
         mediaPlayer = MediaPlayer.create(this, somDoAlarme)
         mediaPlayer?.isLooping = true
         mediaPlayer?.start()
+
+        try {
+            val intent = Intent("ACTION_CONFIGURAR_NOTIFICACAO")
+            sendBroadcast(intent)
+        } catch (e: Exception) {
+            Log.d("NOTIFICACAO", "startAlarm: ")
+            e.printStackTrace()
+        }
     }
 
     private fun stopAlarm(){

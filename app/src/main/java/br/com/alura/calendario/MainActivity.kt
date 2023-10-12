@@ -4,22 +4,25 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.CalendarView
-import android.widget.TextView
-import android.widget.Toast
+import br.com.alura.calendario.databinding.ActivityMainBinding
 
 class MainActivity : Activity() {
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val activityMain = binding.root
+        setContentView(activityMain)
 
-        val cv = findViewById<CalendarView>(R.id.calendarView)
+        val cv = binding.calendarView
 
         vaiParaTelaAnotacao(cv)
 
     }
 
     private fun vaiParaTelaAnotacao(cv: CalendarView) {
-        var dia: Int = 0
+        var dia = 0
         cv.setOnDateChangeListener { _, ano, mes, diaDoMes ->
             if (diaDoMes == dia) {
                 val intent = Intent(this, TelaAnotacoes::class.java)

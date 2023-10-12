@@ -1,44 +1,63 @@
 package br.com.alura.calendario
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.widget.Button
-import android.widget.TimePicker
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
+import br.com.alura.calendario.databinding.ConfigurarAlarmeActivityBinding
 import java.util.Calendar
 
 class ConfigurarAlarmeActivity: Activity() {
+    private lateinit var binding: ConfigurarAlarmeActivityBinding
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.configurar_alarme_activity)
-        println(intent.getStringExtra("dataSelecionada"))
+        binding = ConfigurarAlarmeActivityBinding.inflate(layoutInflater)
+        val configurarAlarmeActivity = binding.root
+        setContentView(configurarAlarmeActivity)
 
-        val botaoPronto = findViewById<Button>(R.id.configurarAlarmeBotaoPronto)
-        botaoPronto.setOnClickListener{
-            configuraAlarme()
-            configuraNotificacao()
-            finish()
+        try {
+            val filter = IntentFilter("ACTION_CONFIGURAR_NOTIFICACAO")
+            registerReceiver(receiver, filter, RECEIVER_EXPORTED)
+        } catch (e: Exception) {
+            Log.d("NOTIFICACAO", "onCreate: ")
+            e.printStackTrace()
         }
 
+
+        val botaoPronto = binding.configurarAlarmeBotaoPronto
+        botaoPronto.setOnClickListener{
+            configuraAlarme()
+//            finish()
+        }
 
         voltarParaTelaAnterior()
     }
 
-    private fun configuraNotificacao() {
+    val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+                Log.d("NOTIFICACAO", "receiver: ")
+            if (intent?.action == "ACTION_CONFIGURAR_NOTIFICACAO") {
+                configuraNotificacao()
+            }
+        }
+    }
+
+    fun configuraNotificacao() {
         val notificationManager = NotificationManagerCompat.from(this)
         val channelId = "alarm_channel"
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
@@ -61,14 +80,9 @@ class ConfigurarAlarmeActivity: Activity() {
             .setContentText("Teste de Alarme")
             .addAction(R.drawable.ic_stop, "Parar", pendingStopIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-//            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .build()
-
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this,
-//                arrayOf(Manifest.permission.POST_NOTIFICATIONS.toString()),101);
-//        }
 
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -82,7 +96,7 @@ class ConfigurarAlarmeActivity: Activity() {
     }
 
     private fun configuraAlarme() {
-        val timePicker = findViewById<TimePicker>(R.id.timePicker)
+        val timePicker = binding.timePicker
 
         val dataSelecionada = intent.getStringExtra("dataSelecionada")
         val partes = dataSelecionada?.split("-")
@@ -91,6 +105,7 @@ class ConfigurarAlarmeActivity: Activity() {
         val dia = partes?.get(2)?.toInt()
 
         val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+
         val intent = Intent(this, AlarmService::class.java)
         intent.action = "ACTION_START_ALARM"
         val pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
@@ -114,10 +129,15 @@ class ConfigurarAlarmeActivity: Activity() {
     }
 
     private fun voltarParaTelaAnterior() {
-        val botaoVoltar = findViewById<Button>(R.id.configurarAlarmeBotaoVoltar)
+        val botaoVoltar = binding.configurarAlarmeBotaoVoltar
         botaoVoltar.setOnClickListener {
             finish()
         }
+    }
+
+    override fun onDestroy() {
+        unregisterReceiver(receiver)
+        super.onDestroy()
     }
 
 }

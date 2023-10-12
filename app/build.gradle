@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId "br.com.alura.calendario"
-        minSdk 24
+        minSdk 26
         compileSdkVersion 34
         targetSdk 34
         versionCode 1
@@ -30,6 +30,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+    buildFeatures {
+        viewBinding true
     }
 }
 
